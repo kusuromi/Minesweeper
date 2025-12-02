@@ -1,11 +1,9 @@
-# gui.py
 import sys
 import pygame
 
 from logic import GameBoard
 
-# ======== Уровни сложности ========
-
+# Уровни сложности
 LEVELS = {
     "Простой":  {"width": 9,  "height": 9,  "mines": 10},
     "Средний":  {"width": 16, "height": 16, "mines": 40},
@@ -17,8 +15,7 @@ LEVEL_ORDER = ["Простой", "Средний", "Сложный"]
 CELL_SIZE = 40
 HUD_HEIGHT = 80
 
-# ======== Цвета (Стиль Dark Classic) ========
-
+# Цвета
 BG_COLOR = (50, 50, 50)           # Фон окна
 HUD_BG_COLOR = (40, 40, 40)       # Фон панели
 CELL_CLOSED_COLOR = (80, 80, 80)  # Закрытая ячейка
@@ -49,11 +46,12 @@ NUMBER_COLORS = {
 FLAG_COLOR = (230, 50, 50)
 MINE_COLOR = (200, 200, 200)
 
+
 # ======== Основная функция ========
 
 def run_game():
     pygame.init()
-    pygame.display.set_caption("Сапёр (Dark Mode)")
+    pygame.display.set_caption("Minesweeper")
     clock = pygame.time.Clock()
 
     # Индекс текущего уровня в списке LEVEL_ORDER
@@ -70,8 +68,6 @@ def run_game():
     while running:
         screen_w = screen.get_width()
         
-        # Определяем область центральной кнопки
-        # Высота (35) теперь совпадает с высотой LED-табло в draw_game
         btn_w, btn_h = 140, 35  
         
         center_btn_rect = pygame.Rect(
@@ -92,7 +88,7 @@ def run_game():
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mx, my = pygame.mouse.get_pos()
                 
-                # 1. Нажатие на кнопку смены уровня (по центру)
+                # 1. Нажатие на кнопку смены уровня
                 if center_btn_rect.collidepoint(mx, my) and event.button == 1:
                     # Циклическая смена уровня
                     current_level_idx = (current_level_idx + 1) % len(LEVEL_ORDER)
@@ -110,14 +106,14 @@ def run_game():
                     row = (my - HUD_HEIGHT) // CELL_SIZE
                     
                     if 0 <= row < board.height and 0 <= col < board.width:
-                        # Если игра ЗАКОНЧЕНА -> Перезапуск по клику ЛКМ
+                        # Если игра ЗАКОНЧЕНА
                         if board.game_over:
                             if event.button == 1: # ЛКМ для рестарта
                                 board.reset()
                                 start_ticks = pygame.time.get_ticks()
                                 final_time_sec = 0
                         
-                        # Если игра ИДЕТ -> Обычная логика
+                        # Если игра ИДЕТ
                         else:
                             if event.button == 1: # ЛКМ
                                 board.open_cell(row, col)
@@ -182,7 +178,7 @@ def draw_game(screen: pygame.Surface,
                 color = CELL_CLOSED_COLOR
             
             pygame.draw.rect(screen, color, rect)
-            pygame.draw.rect(screen, GRID_COLOR, rect, 1) # Тонкая рамка
+            pygame.draw.rect(screen, GRID_COLOR, rect, 1)
 
             center = rect.center
             
@@ -190,7 +186,7 @@ def draw_game(screen: pygame.Surface,
                 if cell.is_mine:
                     # Если игра проиграна, взорванная мина подсвечивается
                     if board.game_over:
-                        pygame.draw.rect(screen, (100, 50, 50), rect) # Красноватый фон
+                        pygame.draw.rect(screen, (100, 50, 50), rect)
                         pygame.draw.rect(screen, GRID_COLOR, rect, 1)
                     draw_mine(screen, center[0], center[1], CELL_SIZE//3)
                 else:
@@ -215,23 +211,23 @@ def draw_game(screen: pygame.Surface,
                     pygame.draw.line(screen, (0,0,0), rect.topright, rect.bottomleft, 2)
 
 
-    # ----- HUD (Верхняя панель) -----
+    # ----- HUD -----
     hud_rect = pygame.Rect(0, 0, screen_rect.width, HUD_HEIGHT)
     pygame.draw.rect(screen, HUD_BG_COLOR, hud_rect)
     pygame.draw.line(screen, (0, 0, 0), (0, HUD_HEIGHT-1), (screen_rect.width, HUD_HEIGHT-1), 2)
 
-    # -- Табло мин (слева) --
+    # -- Табло мин --
     mines_left = max(0, board.remaining_mines)
     led_w, led_h = 70, 35
     mines_rect = pygame.Rect(20, (HUD_HEIGHT - led_h)//2, led_w, led_h)
     draw_led_display(screen, mines_rect, mines_left)
 
-    # -- Табло таймера (справа) --
+    # -- Табло таймера --
     time_val = min(elapsed_sec, 999)
     time_rect = pygame.Rect(screen_rect.width - 20 - led_w, (HUD_HEIGHT - led_h)//2, led_w, led_h)
     draw_led_display(screen, time_rect, time_val)
 
-    # -- Центральная кнопка (Уровень) --
+    # -- Центральная кнопка --
     pygame.draw.rect(screen, BTN_COLOR, btn_rect)
     pygame.draw.rect(screen, BTN_BORDER, btn_rect, 1)
     
@@ -240,11 +236,10 @@ def draw_game(screen: pygame.Surface,
     text_rect = text_surf.get_rect(center=btn_rect.center)
     screen.blit(text_surf, text_rect)
 
-    # ----- Экран победы/поражения (Затемнение) -----
+    # ----- Экран победы/поражения -----
     if board.game_over:
-        # Создаем полупрозрачную поверхность на весь экран
         overlay = pygame.Surface((screen_rect.width, screen_rect.height), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 160)) # Черный цвет, альфа 160
+        overlay.fill((0, 0, 0, 160))
         screen.blit(overlay, (0, 0))
 
         msg = "ПОБЕДА" if board.win else "GAME OVER"
@@ -272,9 +267,8 @@ def draw_game(screen: pygame.Surface,
 
 
 def draw_led_display(surface: pygame.Surface, rect: pygame.Rect, value: int):
-    """Рисует число в стиле LED дисплея"""
     pygame.draw.rect(surface, LED_BG_COLOR, rect)
-    pygame.draw.rect(surface, (80, 40, 40), rect, 1) # Рамка
+    pygame.draw.rect(surface, (80, 40, 40), rect, 1)
     
     font_led = pygame.font.SysFont("Consolas", 28, bold=True)
     text_str = f"{value:03d}"

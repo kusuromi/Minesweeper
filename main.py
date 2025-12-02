@@ -1,4 +1,3 @@
-# main.py
 from gui import run_game
 
 if __name__ == "__main__":

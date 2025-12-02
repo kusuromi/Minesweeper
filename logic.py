@@ -1,4 +1,3 @@
-# logic.py
 import random
 from dataclasses import dataclass
 
@@ -13,7 +12,7 @@ class Cell:
 
 
 class GameBoard:
-    """Логика игры «Сапёр» без графики."""
+    """Логика игры."""
     def __init__(self, width: int, height: int, mines_count: int):
         if mines_count >= width * height:
             raise ValueError("Слишком много мин для такого поля.")
@@ -29,7 +28,6 @@ class GameBoard:
 
         self._create_new_board()
 
-    # ======== Вспомогательные методы ========
 
     def _create_new_board(self):
         """Создаём новое поле, расставляем мины и считаем соседей."""
@@ -41,9 +39,11 @@ class GameBoard:
         self._place_mines()
         self._calculate_adjacent_mines()
 
+
     def reset(self):
-        """Полный сброс игры (новое поле с теми же параметрами)."""
+        """Полный сброс игры."""
         self._create_new_board()
+
 
     def _place_mines(self):
         """Случайное размещение мин."""
@@ -51,6 +51,7 @@ class GameBoard:
         mine_coords = random.sample(all_coords, self.mines_count)
         for r, c in mine_coords:
             self.board[r][c].is_mine = True
+
 
     def _calculate_adjacent_mines(self):
         """Подсчёт количества мин вокруг каждой клетки."""
@@ -69,10 +70,10 @@ class GameBoard:
                             count += 1
                 self.board[r][c].adjacent_mines = count
 
+
     def _in_bounds(self, r: int, c: int) -> bool:
         return 0 <= r < self.height and 0 <= c < self.width
 
-    # ======== Публичные методы для GUI ========
 
     def open_cell(self, r: int, c: int):
         """Открытие клетки. Если мина — игра заканчивается."""
@@ -104,6 +105,7 @@ class GameBoard:
 
         self._update_win_condition()
 
+
     def toggle_flag(self, r: int, c: int):
         """Поставить/убрать флаг."""
         if not self._in_bounds(r, c) or self.game_over:
@@ -122,6 +124,7 @@ class GameBoard:
                 cell.is_flagged = True
                 self.flags_count += 1
 
+
     def _update_win_condition(self):
         """Проверка условия победы: все не-мины открыты."""
         for r in range(self.height):
@@ -132,7 +135,8 @@ class GameBoard:
         self.win = True
         self.game_over = True
 
+
     @property
     def remaining_mines(self) -> int:
-        """Оценка: сколько мин осталось (мины - флаги)."""
+        """Оценка: сколько мин осталось."""
         return self.mines_count - self.flags_count
