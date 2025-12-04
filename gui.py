@@ -65,6 +65,7 @@ def load_high_scores():
     except (json.JSONDecodeError, OSError):
         return {}
 
+
 def save_high_scores(scores):
     """Сохраняет рекорды в файл JSON."""
     try:
@@ -100,7 +101,6 @@ def run_game():
         
         # Размеры кнопки
         btn_w, btn_h = 140, 35  
-        # Чуть сместим кнопку вверх, чтобы влез текст рекорда под ней
         btn_y = (HUD_HEIGHT - btn_h) // 2 - 8 
         
         center_btn_rect = pygame.Rect(
@@ -153,25 +153,19 @@ def run_game():
                             elif event.button == 3: # ПКМ
                                 board.toggle_flag(row, col)
 
-        # === ИСПРАВЛЕННАЯ ЛОГИКА ТАЙМЕРА И РЕКОРДОВ ===
+        # Таймер и рекорды
         if board.game_over:
-            # Если игра закончилась, а время еще не зафиксировано (равно 0)
             if final_time_sec == 0:
-                # Фиксация времени окончания
                 final_time_sec = (pygame.time.get_ticks() - start_ticks) // 1000
                 
-                # Если ПОБЕДА - проверяем рекорд
                 if board.win:
                     current_record = high_scores.get(current_level_name)
-                    # Если рекорда нет или новое время лучше (меньше)
                     if current_record is None or final_time_sec < current_record:
                         high_scores[current_level_name] = final_time_sec
                         save_high_scores(high_scores)
 
             elapsed = final_time_sec
         else:
-            # Пока игра идет, считаем elapsed для отображения,
-            # но НЕ трогаем final_time_sec (он должен оставаться 0)
             elapsed = (pygame.time.get_ticks() - start_ticks) // 1000
 
         # Получаем текущий рекорд для отрисовки
@@ -205,14 +199,14 @@ def draw_game(screen: pygame.Surface,
               level_name: str,
               elapsed_sec: int,
               btn_rect: pygame.Rect,
-              best_time: int): # Добавлен аргумент best_time
+              best_time: int):
     
     screen_rect = screen.get_rect()
     screen.fill(BG_COLOR)
 
     font_cell = pygame.font.SysFont("Verdana", int(CELL_SIZE * 0.6), bold=True)
     font_btn = pygame.font.SysFont("Arial", 18, bold=True)
-    font_record = pygame.font.SysFont("Arial", 14) # Шрифт для рекорда
+    font_record = pygame.font.SysFont("Arial", 14)
 
     # ----- Сетка поля -----
     for r in range(board.height):
@@ -234,7 +228,6 @@ def draw_game(screen: pygame.Surface,
             
             if cell.is_open:
                 if cell.is_mine:
-                    # Если игра проиграна, взорванная мина подсвечивается
                     if board.game_over:
                         pygame.draw.rect(screen, (100, 50, 50), rect)
                         pygame.draw.rect(screen, GRID_COLOR, rect, 1)
@@ -250,11 +243,9 @@ def draw_game(screen: pygame.Surface,
                 if cell.is_flagged:
                     draw_flag(screen, center[0], center[1])
                 
-                # Показ мин при проигрыше
                 if board.game_over and cell.is_mine and not cell.is_flagged:
                      draw_mine(screen, center[0], center[1], CELL_SIZE//3, color=(150, 100, 100))
                 
-                # Неверный флаг
                 if board.game_over and not cell.is_mine and cell.is_flagged:
                     draw_flag(screen, center[0], center[1])
                     pygame.draw.line(screen, (0,0,0), rect.topleft, rect.bottomright, 2)
@@ -269,13 +260,16 @@ def draw_game(screen: pygame.Surface,
     # -- Табло мин --
     mines_left = max(0, board.remaining_mines)
     led_w, led_h = 70, 35
-    # Центрируем по вертикали HUD
-    mines_rect = pygame.Rect(20, (HUD_HEIGHT - led_h)//2, led_w, led_h)
+    
+    # Используем btn_rect.y, чтобы выровнять индикаторы по кнопке
+    led_y = btn_rect.y 
+    
+    mines_rect = pygame.Rect(20, led_y, led_w, led_h)
     draw_led_display(screen, mines_rect, mines_left)
 
     # -- Табло таймера --
     time_val = min(elapsed_sec, 999)
-    time_rect = pygame.Rect(screen_rect.width - 20 - led_w, (HUD_HEIGHT - led_h)//2, led_w, led_h)
+    time_rect = pygame.Rect(screen_rect.width - 20 - led_w, led_y, led_w, led_h)
     draw_led_display(screen, time_rect, time_val)
 
     # -- Центральная кнопка --
@@ -294,6 +288,7 @@ def draw_game(screen: pygame.Surface,
         rec_str = "Рекорд: --"
     
     rec_surf = font_record.render(rec_str, True, RECORD_TEXT_COLOR)
+    # Позиционируем текст чуть ниже кнопки
     rec_rect = rec_surf.get_rect(center=(btn_rect.centerx, btn_rect.bottom + 12))
     screen.blit(rec_surf, rec_rect)
 
@@ -359,4 +354,3 @@ def draw_mine(surface: pygame.Surface, cx: int, cy: int, r: int, color=MINE_COLO
     pygame.draw.line(surface, color, (cx + r, cy - r), (cx - r, cy + r), 2)
     # Блик
     pygame.draw.circle(surface, (255, 255, 255), (cx - r//3, cy - r//3), r//3)
-    
